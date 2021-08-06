@@ -1,0 +1,10 @@
+# these python extensions are for testing
+ansible<2.10.0
+sh==1.12.14
+molecule==3.2.4
+molecule-docker==0.2.4
+yamllint==1.26.1
+ansible-lint<=4.3.7
+docker==4.2.2
+anyconfig>=0.10.0 # not directly required, pinned by Snyk to avoid a vulnerability
+
