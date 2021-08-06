@@ -9,7 +9,7 @@ on:
 
 jobs:
   lint:
-    runs-on: centos-7
+    runs-on: ubuntu-20.04
     steps:
       - name: checkout
         uses: actions/checkout@v2
