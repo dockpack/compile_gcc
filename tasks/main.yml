@@ -1,0 +1,212 @@
+---
+# tasks file for compile_gcc
+
+- name: Include version-specific variables for CentOS/RHEL.
+  include_vars: "RedHat-{{ ansible_distribution_version.split('.')[0] }}.yml"
+  when: ansible_distribution == 'CentOS' or
+        ansible_distribution == 'Red Hat Enterprise Linux' or
+        ansible_distribution == 'RedHat'
+
+- name: install RPMs
+  yum:
+    name: "{{ rpms_for_compiling_gcc }}"
+    state: present
+  register: network_access
+  until: network_access is success
+  delay: 2
+  retries: 10
+
+- name: create directory
+  file:
+    path: /tmp/compile_gcc
+    state: directory
+    owner: root
+    group: root
+    mode: 0700
+
+- name: download Binutils source
+  get_url:
+    url: "{{ binutils_url }}"
+    dest: "/tmp/compile_gcc/binutils-{{ binutilsver }}.tar.bz2"
+    mode: 0755
+    validate_certs: false
+  register: download_binutils
+  until: download_binutils is succeeded
+  delay: 2
+  retries: 10
+
+- name: unpack Binutils source
+  unarchive:
+    src: "{{ download_binutils.dest }}"
+    dest: "{{ prefix }}/src"
+    mode: u=rwX,g=rX,o=rX
+    creates: "{{ prefix }}/src/binutils-{{ binutilsver }}"
+    copy: false
+
+- name: download GCC source
+  get_url:
+    url: "{{ gcc_url }}"
+    dest: "/tmp/compile_gcc/gcc-{{ GCCVER }}.tar.gz"
+    mode: 0755
+    validate_certs: false
+  register: download_gcc_src
+  until: download_gcc_src is succeeded
+  delay: 3
+  retries: 3
+
+- name: unarchive GCC source
+  unarchive:
+    src: "{{ download_gcc_src.dest }}"
+    dest: "{{ prefix }}/src"
+    mode: u=rwX,g=rX,o=rX
+    creates: "{{ prefix }}/src/gcc-{{ GCCVER }}"
+    copy: false
+
+- name: source devtoolset enable file
+  when: collections_enabled and ansible_os_family == 'RedHat'
+  set_fact:
+    cmd_env: "source /opt/rh/{{ cplusplus_devtoolset }}/enable && "
+
+- name: check binutils config.status
+  stat:
+    path: "{{ prefix }}/src/binutils-{{ binutilsver }}/config.status"
+  register: binutils_config
+
+- name: configure Binutils
+  shell: "{{ cmd_env | default('') }} ./configure"
+  args:
+    chdir: "{{ prefix }}/src/binutils-{{ binutilsver }}"
+  when: not binutils_config.stat.exists
+  tags:
+    - skip_ansible_lint
+
+- name: make Binutils
+  shell: "{{ cmd_env | default('') }} make -j {{ ansible_processor_vcpus }}"
+  args:
+    chdir: "{{ prefix }}/src/binutils-{{ binutilsver }}"
+    creates: "{{ prefix }}/src/binutils-{{ binutilsver }}/ld/ld-new"
+  tags:
+    - skip_ansible_lint
+
+- name: install binutils
+  command: make install
+  args:
+    chdir: "{{ prefix }}/src/binutils-{{ binutilsver }}"
+    creates: "{{ prefix }}/bin/strip"
+
+- name: download_prerequisites
+  command: contrib/download_prerequisites
+  register: download_prerequisites
+  until: download_prerequisites.rc|int == 0
+  delay: 2
+  retries: 10
+  args:
+    chdir: "{{ prefix }}/src/gcc-{{ GCCVER }}"
+    creates: "{{ prefix }}/src/gcc-{{ GCCVER }}/isl-0.14.tar.bz2"
+
+- name: create directory
+  file:
+    path: "{{ prefix }}/src/build"
+    state: directory
+    mode: 0755
+  changed_when: true
+
+- name: configure GCC source
+  shell: "{{ cmd_env | default('') }} ../gcc-{{ GCCVER }}/configure \
+          {{ gcc_configure }}"
+  args:
+    executable: /bin/bash
+    chdir: "{{ prefix }}/src/build"
+    creates: "{{ prefix }}/src/build/config.status"
+  changed_when: true
+  tags:
+    - skip_ansible_lint
+
+- name: make GCC with libgcc_s.so.1 as evidence
+  shell: "{{ cmd_env | default('') }} make -j {{ ansible_processor_vcpus }}"
+  args:
+    executable: /bin/bash
+    chdir: "{{ prefix }}/src/build"
+    creates: "{{ prefix }}/src/build/gcc/libgcc_s.so.1"
+  changed_when: true
+  tags:
+    - skip_ansible_lint
+
+- name: install GCC with cxxabi.h as evidence
+  command: "make -j {{ ansible_processor_vcpus }} install"
+  args:
+    chdir: "{{ prefix }}/src/build"
+    creates: "{{ prefix }}/include/c++/{{ GCCVER }}/cxxabi.h"
+  become: true
+
+- name: disable collections
+  set_fact:
+    collections_enabled: false
+
+- name: disable devtoolset
+  file:
+    path: /etc/profile.d/devtoolset.sh
+    state: absent
+
+- name: cleanup RPMs
+  command: yum erase -y gcc-c++ --setopt=clean_requirements_on_remove=1
+  args:
+    warn: false
+  changed_when: false
+
+- name: cleanup RPMs
+  command: yum clean all
+  args:
+    warn: false
+  tags:
+    - skip_ansible_lint
+
+- name: what is my new compiler?
+  shell: "{{ prefix }}/bin/gcc --version"
+  register: gcc_version
+  changed_when: false
+  tags:
+    - skip_ansible_lint
+    - test
+
+- name: Display details about gcc version
+  debug:
+    msg: "{{ gcc_version.stdout_lines[0] }}"
+  tags:
+    - test
+
+- name: Install D_GLIBCXX_USE_CXX11_ABI=1 test case
+  template:
+    src: cxx_abi_test.cpp
+    dest: cxx_abi_test.cpp
+    mode: 0644
+  tags:
+    - test
+
+- name: Run D_GLIBCXX_USE_CXX11_ABI=1 test case
+  environment:
+    PATH: /usr/local/bin:/bin:/usr/bin
+  shell: "{{ prefix }}/bin/g++ -std=c++11 -D_GLIBCXX_USE_CXX11_ABI=1 \
+          cxx_abi_test.cpp && ./a.out"
+  changed_when: false
+  tags:
+    - skip_ansible_lint
+    - test
+
+- name: Ensure profile file exists
+  file:
+    path: /etc/profile.d/gcc_local.sh
+    state: touch
+    mode: 0644
+  tags:
+    - config
+
+- name: Configure LD_LIBRARY_PATH
+  blockinfile:
+    path: /etc/profile.d/gcc_local.sh
+    marker: "# {mark} ANSIBLE MANAGED BLOCK"
+    block: |
+      export PATH={{ prefix }}/bin:$PATH
+      export LD_LIBRARY_PATH={{ prefix }}/lib64:$LD_LIBRARY_PATH
+  tags:
+    - config

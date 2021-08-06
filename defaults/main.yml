@@ -1,0 +1,12 @@
+---
+# defaults file for compile_gcc
+
+# Version to compile
+GCCVER: '10.3.0'
+
+gcc_configure: '--disable-multilib --enable-languages=c,c++'
+gcc_mirror_url: 'http://mirrors.concertpass.com/gcc/releases'
+gcc_url: "{{ gcc_mirror_url }}/gcc-{{ GCCVER }}/gcc-{{ GCCVER }}.tar.gz"
+binutils_file: "binutils-{{ binutilsver }}.tar.bz2"
+binutils_url: "http://ftp.gnu.org/gnu/binutils/{{ binutils_file }}"
+prefix: /usr/local

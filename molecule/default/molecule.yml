@@ -1,0 +1,20 @@
+---
+dependency:
+  name: galaxy
+driver:
+  name: docker
+lint: |
+  set -e
+  ansible-lint
+  yamllint .
+platforms:
+  - name: compile-gcc-centos8
+    image: centos:8.3.2011
+    privileged: true
+  - name: compile-gcc-centos7
+    image: centos:7.9.2009
+    privileged: true
+provisioner:
+  name: ansible
+verifier:
+  name: ansible
