@@ -1,6 +1,17 @@
 ---
 # tasks file for compile_gcc
 
+- name: Print out operating system details
+  debug:
+    msg: >-
+      os_family:
+      {{ ansible_os_family }},
+      distro:
+      {{ ansible_distribution }}
+      {{ ansible_distribution_version }},
+      kernel:
+      {{ ansible_kernel }}
+
 - name: Include version-specific variables for CentOS/RHEL.
   include_vars: "RedHat-{{ ansible_distribution_version.split('.')[0] }}.yml"
   when: ansible_distribution == 'CentOS' or

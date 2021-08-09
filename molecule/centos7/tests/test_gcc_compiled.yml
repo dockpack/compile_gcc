@@ -1,0 +1,25 @@
+---
+# goss tests for `molecule verify` of dockpack.compile_gcc
+file:
+  /usr/local/bin/gcc:
+    exists: true
+  /usr/local/include/c++/10.3.0/version:
+    exists: true
+  /usr/local/lib/gcc/x86_64-pc-linux-gnu/10.3.0/libgcc.a:
+    exists: true
+command:
+  c++ --version:
+    exit-status: 0
+    stdout:
+      - c++ (GCC) 10.3.0
+    stderr: []
+  cpp --version:
+    exit-status: 0
+    stdout:
+      - cpp (GCC) 10.3.0
+    stderr: []
+  gcc --version:
+    exit-status: 0
+    stdout:
+      - gcc (GCC) 10.3.0
+    stderr: []
