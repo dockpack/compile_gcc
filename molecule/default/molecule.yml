@@ -18,3 +18,5 @@ provisioner:
   name: ansible
 verifier:
   name: ansible
+  config_options:
+    stdout_callback: yaml

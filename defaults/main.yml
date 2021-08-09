@@ -11,7 +11,7 @@ gcc_url: "{{ gcc_mirror_url }}/gcc-{{ GCCVER }}/gcc-{{ GCCVER }}.tar.gz"
 binutils_file: "binutils-{{ binutilsver }}.tar.bz2"
 binutils_url: "http://ftp.gnu.org/gnu/binutils/{{ binutils_file }}"
 prefix: /usr/local
-
+dejagnu_url: "https://ftp.nluug.nl/pub/gnu/dejagnu/dejagnu-1.6.3.tar.gz"
 dependencies_url: 'https://gcc.gnu.org/pub/gcc/infrastructure/'
 dependencies_url_signed: true
 dependencies:
