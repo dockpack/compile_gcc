@@ -25,6 +25,8 @@
   until: network_access is success
   delay: 2
   retries: 10
+  tags:
+    - test
 
 - name: create download directory
   file:
@@ -143,19 +145,23 @@
     dest: "{{ prefix }}/src"
     mode: u=rwX,g=rX,o=rX
     creates: "{{ prefix }}/src/dejagnu-{{ dejagnu_ver }}"
+  tags:
+    - test
 
 - name: install dejagnu
   when: test_gcc|bool
   script: config_make_install.sh
   args:
     chdir: "{{ prefix }}/src/dejagnu-{{ dejagnu_ver }}"
+    creates:  "{{ prefix }}/bin/dejagnu"
+  tags:
+    - test
 
 - name: create directory
   file:
     path: "{{ prefix }}/src/build"
     state: directory
     mode: 0755
-  changed_when: true
 
 - name: configure GCC source
   shell: "{{ cmd_env | default('') }} ../gcc-{{ GCCVER }}/configure \
@@ -164,7 +170,6 @@
     executable: /bin/bash
     chdir: "{{ prefix }}/src/build"
     creates: "{{ prefix }}/src/build/config.status"
-  changed_when: true
   tags:
     - skip_ansible_lint
 
@@ -174,9 +179,16 @@
     executable: /bin/bash
     chdir: "{{ prefix }}/src/build"
     creates: "{{ prefix }}/src/build/gcc/libgcc_s.so.1"
-  changed_when: true
   tags:
     - skip_ansible_lint
+
+- name: test GCC C++ compiler
+  when: test_gcc|bool
+  command: make -j {{ ansible_processor_vcpus }} check-c++
+  args:
+    chdir: "{{ prefix }}/src/build"
+  tags:
+    - test
 
 - name: install GCC with cxxabi.h as evidence
   command: "make -j {{ ansible_processor_vcpus }} install"
