@@ -1,6 +1,7 @@
 ---
 dependency:
   name: galaxy
+  requirements_file: requirements.yml
 driver:
   name: docker
 lint: |
@@ -18,3 +19,5 @@ provisioner:
   name: ansible
 verifier:
   name: ansible
+  config_options:
+    stdout_callback: yaml

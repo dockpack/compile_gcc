@@ -3,6 +3,10 @@ collections_enabled: true
 DTSVER: 7
 cplusplus_devtoolset: "devtoolset-{{ DTSVER }}"
 binutilsver: 2.29.1
+rpms_for_testing_gcc:
+  - dejagnu
+  - expect
+  - tcl
 rpms_for_compiling_gcc:
   - flex
   - svn
