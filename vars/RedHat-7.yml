@@ -2,7 +2,7 @@
 collections_enabled: true
 DTSVER: 10
 cplusplus_devtoolset: "devtoolset-{{ DTSVER }}"
-binutilsver: 2.29.1
+binutilsver: 2.37
 rpms_for_testing_gcc:
   - expect
   - tcl

@@ -1,6 +1,6 @@
 ---
 collections_enabled: false
-binutilsver: 2.36.1
+binutilsver: 2.37
 rpms_for_testing_gcc:
   - expect
   - tcl
