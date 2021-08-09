@@ -37,7 +37,7 @@
 
 - name: unpack Binutils source
   unarchive:
-    src: "{{ download_binutils.dest }}"
+    src: "/tmp/compile_gcc/binutils-{{ binutilsver }}.tar.bz2"
     dest: "{{ prefix }}/src"
     mode: u=rwX,g=rX,o=rX
     creates: "{{ prefix }}/src/binutils-{{ binutilsver }}"
