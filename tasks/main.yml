@@ -198,6 +198,7 @@
   command: make -j {{ ansible_processor_vcpus }} check-c++
   args:
     chdir: "{{ prefix }}/src/build"
+    creates: "{{ prefix }}/src/build/gcc/testsuite/g++/g++.sum"
   tags:
     - test
 
@@ -229,6 +230,7 @@
     warn: false
   tags:
     - skip_ansible_lint
+    - notest
 
 - name: what is my new compiler?
   shell: "{{ prefix }}/bin/gcc --version"
@@ -263,19 +265,9 @@
     - test
 
 - name: Ensure profile file exists
-  file:
-    path: /etc/profile.d/gcc_local.sh
-    state: touch
+  template:
+    src: gcc_local.sh
+    dest: /etc/profile.d/gcc_local.sh
     mode: 0644
-  tags:
-    - config
-
-- name: Configure LD_LIBRARY_PATH
-  blockinfile:
-    path: /etc/profile.d/gcc_local.sh
-    marker: "# {mark} ANSIBLE MANAGED BLOCK"
-    block: |
-      export PATH={{ prefix }}/bin:$PATH
-      export LD_LIBRARY_PATH={{ prefix }}/lib64:$LD_LIBRARY_PATH
   tags:
     - config
