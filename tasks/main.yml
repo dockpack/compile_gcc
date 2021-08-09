@@ -7,7 +7,7 @@
         ansible_distribution == 'Red Hat Enterprise Linux' or
         ansible_distribution == 'RedHat'
 
-- name: install RPMs
+- name: install rpms_for_compiling_gcc
   yum:
     name: "{{ rpms_for_compiling_gcc }}"
     state: present
@@ -16,7 +16,17 @@
   delay: 2
   retries: 10
 
-- name: create directory
+- name: install rpms_for_testing_gcc
+  when: test_gcc|bool
+  yum:
+    name: "{{ rpms_for_testing_gcc }}"
+    state: present
+  register: network_access
+  until: network_access is success
+  delay: 2
+  retries: 10
+
+- name: create download directory
   file:
     path: /tmp/compile_gcc
     state: directory
@@ -119,11 +129,26 @@
   tags:
     - skip_ansible_lint
 
-- name: install binutils
+- name: install Binutils
   command: make install
   args:
     chdir: "{{ prefix }}/src/binutils-{{ binutilsver }}"
     creates: "{{ prefix }}/bin/strip"
+
+- name: unpack dejagnu source
+  when: test_gcc|bool
+  unarchive:
+    src: "{{ dejagnu_url }}"
+    remote_src: true
+    dest: "{{ prefix }}/src"
+    mode: u=rwX,g=rX,o=rX
+    creates: "{{ prefix }}/src/dejagnu-{{ dejagnu_ver }}"
+
+- name: install dejagnu
+  when: test_gcc|bool
+  script: config_make_install.sh
+  args:
+    chdir: "{{ prefix }}/src/dejagnu-{{ dejagnu_ver }}"
 
 - name: create directory
   file:
