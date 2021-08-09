@@ -153,7 +153,7 @@
   script: config_make_install.sh
   args:
     chdir: "{{ prefix }}/src/dejagnu-{{ dejagnu_ver }}"
-    creates:  "{{ prefix }}/bin/dejagnu"
+    creates: "{{ prefix }}/bin/dejagnu"
   tags:
     - test
 
