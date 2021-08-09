@@ -2,6 +2,9 @@
 collections_enabled: false
 binutilsver: 2.36.1
 rpms_for_compiling_gcc:
+  - expect
+  - tcl
+  - python3-test
   - flex
   - svn
   #  - texinfo-tex

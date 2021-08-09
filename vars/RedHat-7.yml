@@ -4,6 +4,9 @@ DTSVER: 10
 cplusplus_devtoolset: "devtoolset-{{ DTSVER }}"
 binutilsver: 2.29.1
 rpms_for_compiling_gcc:
+  - expect
+  - tcl
+  - python3-test
   - flex
   - svn
   - texinfo-tex
