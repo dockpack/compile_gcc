@@ -14,3 +14,4 @@ rpms_for_compiling_gcc:
   - unzip
   - zip
   - bzip2
+...

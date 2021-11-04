@@ -18,7 +18,7 @@
         ansible_distribution == 'Red Hat Enterprise Linux' or
         ansible_distribution == 'RedHat'
 
-- name: install rpms_for_compiling_gcc
+- name: Install rpms_for_compiling_gcc
   yum:
     name: "{{ rpms_for_compiling_gcc }}"
     state: present
@@ -27,7 +27,7 @@
   delay: 2
   retries: 10
 
-- name: install rpms_for_testing_gcc
+- name: Install rpms_for_testing_gcc
   when: test_gcc|bool
   yum:
     name: "{{ rpms_for_testing_gcc }}"
@@ -39,7 +39,7 @@
   tags:
     - test
 
-- name: create download directory
+- name: Create download directory
   file:
     path: /tmp/compile_gcc
     state: directory
@@ -47,7 +47,7 @@
     group: root
     mode: 0700
 
-- name: download Binutils source
+- name: Download Binutils source
   get_url:
     url: "{{ binutils_url }}"
     dest: "/tmp/compile_gcc/binutils-{{ binutilsver }}.tar.bz2"
@@ -58,7 +58,7 @@
   delay: 2
   retries: 10
 
-- name: unpack Binutils source
+- name: Unpack Binutils source
   unarchive:
     src: "/tmp/compile_gcc/binutils-{{ binutilsver }}.tar.bz2"
     dest: "{{ prefix }}/src"
@@ -66,7 +66,7 @@
     creates: "{{ prefix }}/src/binutils-{{ binutilsver }}"
     copy: false
 
-- name: download GCC source
+- name: Download GCC source
   get_url:
     url: "{{ gcc_url }}"
     dest: "/tmp/compile_gcc/gcc-{{ GCCVER }}.tar.gz"
@@ -77,7 +77,7 @@
   delay: 3
   retries: 3
 
-- name: unarchive GCC source
+- name: Unarchive GCC source
   unarchive:
     src: "/tmp/compile_gcc/gcc-{{ GCCVER }}.tar.gz"
     dest: "{{ prefix }}/src"
@@ -85,7 +85,7 @@
     creates: "{{ prefix }}/src/gcc-{{ GCCVER }}"
     copy: false
 
-- name: download GCC dependencies
+- name: Download GCC dependencies
   get_url:
     url: "{{ dependencies_url }}{{ item.file }}"
     checksum: "md5:{{ item.md5 }}"
@@ -95,7 +95,7 @@
   loop_control:
     label: "{{ dependencies_url }}{{ item.file }}"
 
-- name: unarchive GCC dependencies
+- name: Unarchive GCC dependencies
   unarchive:
     src: "{{ prefix }}/src/gcc-{{ GCCVER }}/{{ item.file }}"
     dest: "{{ prefix }}/src/gcc-{{ GCCVER }}/"
@@ -106,7 +106,7 @@
   loop_control:
     label: "{{ prefix }}/src/gcc-{{ GCCVER }}/{{ item.dir }}"
 
-- name: symlink GCC dependencies
+- name: Symlink GCC dependencies
   file:
     src: "{{ prefix }}/src/gcc-{{ GCCVER }}/{{ item.dir }}"
     path: "{{ prefix }}/src/gcc-{{ GCCVER }}/{{ item.name }}"
@@ -116,17 +116,17 @@
   loop_control:
     label: "{{ prefix }}/src/gcc-{{ GCCVER }}/{{ item.name }}"
 
-- name: source devtoolset enable file
+- name: Source devtoolset enable file
   when: collections_enabled and ansible_os_family == 'RedHat'
   set_fact:
     cmd_env: "source /opt/rh/{{ cplusplus_devtoolset }}/enable && "
 
-- name: check binutils config.status
+- name: Check binutils config.status
   stat:
     path: "{{ prefix }}/src/binutils-{{ binutilsver }}/config.status"
   register: binutils_config
 
-- name: configure Binutils
+- name: Configure Binutils
   shell: "{{ cmd_env | default('') }} ./configure"
   args:
     chdir: "{{ prefix }}/src/binutils-{{ binutilsver }}"
@@ -134,7 +134,7 @@
   tags:
     - skip_ansible_lint
 
-- name: make Binutils
+- name: Make Binutils
   shell: "{{ cmd_env | default('') }} make -j {{ ansible_processor_vcpus }}"
   args:
     chdir: "{{ prefix }}/src/binutils-{{ binutilsver }}"
@@ -142,13 +142,13 @@
   tags:
     - skip_ansible_lint
 
-- name: install Binutils
+- name: Install Binutils
   command: make install
   args:
     chdir: "{{ prefix }}/src/binutils-{{ binutilsver }}"
     creates: "{{ prefix }}/bin/strip"
 
-- name: unpack dejagnu source
+- name: Unpack dejagnu source
   when: test_gcc|bool
   unarchive:
     src: "{{ dejagnu_url }}"
@@ -159,7 +159,7 @@
   tags:
     - test
 
-- name: install dejagnu
+- name: Install dejagnu
   when: test_gcc|bool
   script: config_make_install.sh
   args:
@@ -168,13 +168,13 @@
   tags:
     - test
 
-- name: create directory
+- name: Create directory
   file:
     path: "{{ prefix }}/src/build"
     state: directory
     mode: 0755
 
-- name: configure GCC source
+- name: Configure GCC source
   shell: "{{ cmd_env | default('') }} ../gcc-{{ GCCVER }}/configure \
           {{ gcc_configure }}"
   args:
@@ -184,7 +184,7 @@
   tags:
     - skip_ansible_lint
 
-- name: make GCC with libgcc_s.so.1 as evidence
+- name: Make GCC with libgcc_s.so.1 as evidence
   shell: "{{ cmd_env | default('') }} make -j {{ ansible_processor_vcpus }}"
   args:
     executable: /bin/bash
@@ -193,7 +193,7 @@
   tags:
     - skip_ansible_lint
 
-- name: test GCC C++ compiler
+- name: Test GCC C++ compiler
   when: test_gcc|bool
   command: make -j {{ ansible_processor_vcpus }} check-c++
   args:
@@ -202,29 +202,30 @@
   tags:
     - test
 
-- name: install GCC with cxxabi.h as evidence
+- name: Install GCC with cxxabi.h as evidence
+  become: true
+  become_user: root
   command: "make -j {{ ansible_processor_vcpus }} install"
   args:
     chdir: "{{ prefix }}/src/build"
     creates: "{{ prefix }}/include/c++/{{ GCCVER }}/cxxabi.h"
-  become: true
 
-- name: disable collections
+- name: Disable collections
   set_fact:
     collections_enabled: false
 
-- name: disable devtoolset
+- name: Disable devtoolset
   file:
     path: /etc/profile.d/devtoolset.sh
     state: absent
 
-- name: cleanup RPMs
+- name: Cleanup RPMs
   command: yum erase -y gcc-c++ --setopt=clean_requirements_on_remove=1
   args:
     warn: false
   changed_when: false
 
-- name: cleanup RPMs
+- name: Cleanup RPMs
   command: yum clean all
   args:
     warn: false
@@ -232,7 +233,7 @@
     - skip_ansible_lint
     - notest
 
-- name: what is my new compiler?
+- name: What is my new compiler?
   shell: "{{ prefix }}/bin/gcc --version"
   register: gcc_version
   changed_when: false
@@ -271,3 +272,4 @@
     mode: 0644
   tags:
     - config
+...

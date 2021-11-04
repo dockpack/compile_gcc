@@ -1,5 +1,5 @@
 ---
-
+# Standards: 0.2
 galaxy_info:
   role_name: compile_gcc
   namespace: dockpack
@@ -7,7 +7,6 @@ galaxy_info:
   description: Ansible role to install GNU C/C++ Compilers
   company: dockpack
   license: MIT
-
 
   min_ansible_version: 2.9
 
@@ -25,3 +24,4 @@ galaxy_info:
     - centos
 
 dependencies: []
+...
