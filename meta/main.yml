@@ -1,7 +1,7 @@
 ---
 
 galaxy_info:
-  role_name: base_gcc
+  role_name: compile_gcc
   namespace: dockpack
   author: Bas Meijer
   description: Ansible role to install GNU C/C++ Compilers
